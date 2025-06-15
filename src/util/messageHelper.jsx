@@ -1,16 +1,16 @@
-const messageUtility = {
-    displaySuccessMessages: messages => {
+const messageHelper = {
+    showSuccesses: messages => {
         if (messages.length === 0) return null
 
         const messageDivs = messages.map((message, index) => (
-            <div key={index} className="alert alert-success rounded-0">
+            <div key={index} className="alert alert-success rounded-0 p-2">
                 {message}
             </div>
         ))
         return messageDivs
     },
 
-    displayErrorMessages: (messages, resolutionLink = null) => {
+    showErrors: (messages, resolutionLink = null) => {
         if (messages.length === 0) return null
 
         let divider = null
@@ -18,7 +18,7 @@ const messageUtility = {
         if (resolutionLink) divider = ' — '
 
         const messageDivs = messages.map((message, index) => (
-            <div key={index} className="alert alert-danger rounded-0">
+            <div key={index} className="alert alert-danger rounded-0 p-2">
                 {message}{divider}{resolutionLink}
             </div>
         ))
@@ -35,4 +35,4 @@ const messageUtility = {
     }
 }
 
-export default messageUtility
+export default messageHelper

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import DepartmentTile from './departments/DepartmentTile'
 import fetchFromBackEnd from '../../util/fetchFromBackEnd.js'
-import messageUtility from '../../util/messageUtility.jsx'
+import messageHelper from '../../util/messageHelper.jsx'
 
 const MainPage = () => {
     const [departments, setDepartments] = useState([])
@@ -30,10 +30,8 @@ const MainPage = () => {
         getDepartments()
     }, [getDepartments])
 
-    const successMessageDisplay =
-        messageUtility.displaySuccessMessages(successMessages)
-    const errorMessageDisplay =
-        messageUtility.displayErrorMessages(errorMessages)
+    const successMessageDisplay = messageHelper.showSuccesses(successMessages)
+    const errorMessageDisplay = messageHelper.showErrors(errorMessages)
 
     const departmentDisplay = departments.map((department, index) => {
         return (
@@ -50,7 +48,7 @@ const MainPage = () => {
     })
 
     return (
-        <div className="container mt-4">
+        <div className="container my-4">
             {successMessageDisplay}
             {errorMessageDisplay}
             <div className="container">

@@ -7,18 +7,15 @@ import fetchFromBackEnd from '../../../../util/fetchFromBackEnd.js'
 
 vi.mock('../../../../util/fetchFromBackEnd.js')
 vi.mock('../../../../util/validateDepartment.js', () => ({
-    default: {
-        validateName: vi.fn(() => ({ valid: true })),
-        validateCode: vi.fn(async () => ({ valid: true })),
-        validateLocation: vi.fn(() => ({ valid: true }))
-    }
+    default: vi.fn(() => ({
+        valid: true,
+        validationErrors: []
+    }))
 }))
-vi.mock('../../../../util/messageUtility.jsx', () => ({
+vi.mock('../../../../util/messageHelper.jsx', () => ({
     default: {
-        displaySuccessMessages:
-        vi.fn(messages => <div>{messages.join(', ')}</div>),
-        displayErrorMessages:
-        vi.fn(messages => <div>{messages.join(', ')}</div>)
+        showSuccesses: vi.fn(messages => <div>{messages.join(', ')}</div>),
+        showErrors: vi.fn(messages => <div>{messages.join(', ')}</div>)
     }
 }))
 

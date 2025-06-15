@@ -7,24 +7,16 @@ import fetchFromBackEnd from '../../../../util/fetchFromBackEnd.js'
 
 vi.mock('../../../../util/fetchFromBackEnd.js')
 vi.mock('../../../../util/validateEmployee.js', () => ({
-    default: {
-        validateFirstName: vi.fn(() => ({ valid: true })),
-        validateLastName: vi.fn(() => ({ valid: true })),
-        validateTitle: vi.fn(() => ({ valid: true })),
-        validateEmail: vi.fn(async () => ({ valid: true })),
-        validateHireDate: vi.fn(() => ({ valid: true })),
-        validateDepartmentId: vi.fn(async () => ({ valid: true })),
-        validateCountryCode: vi.fn(() => ({ valid: true })),
-        validatePhoneNumber: vi.fn(() => ({ valid: true })),
-        validateIsActive: vi.fn(() => ({ valid: true }))
-    }
+    default: vi.fn(() => Promise.resolve({
+        valid: true,
+        validationErrors: []
+    })),
+    getDepartments: vi.fn(() => Promise.resolve([{ id: 1, name: 'IT' }]))
 }))
-vi.mock('../../../../util/messageUtility.jsx', () => ({
+vi.mock('../../../../util/messageHelper.jsx', () => ({
     default: {
-        displaySuccessMessages:
-            vi.fn(messages => <div>{messages.join(', ')}</div>),
-        displayErrorMessages:
-            vi.fn(messages => <div>{messages.join(', ')}</div>)
+        showSuccesses: vi.fn(messages => <div>{messages.join(', ')}</div>),
+        showErrors: vi.fn(messages => <div>{messages.join(', ')}</div>)
     }
 }))
 
@@ -37,65 +29,62 @@ const renderComponent = () => {
 }
 
 const employeeInput = {
-    first_name: 'Jane',
-    last_name: 'Doe',
+    firstName: 'Jane',
+    lastName: 'Doe',
     title: 'Engineer',
-    email: 'jane@example.com',
-    country_code: '+1',
-    phone_number: '5551234567',
-    department_id: '1',
-    hire_date: '2023-01-01'
+    departmentId: 1,
+    email: 'jane.doe@example.com',
+    countryCode: '1',
+    phoneNumber: '5551234567',
+    isActive: 1,
+    hireDate: '2023-01-01'
 }
 
-const departmentData = [{ id: 1, name: 'Engineering' }]
+const departmentData = [{ id: 1, name: 'IT' }]
 
 describe('AddEmployeePage', () => {
     afterEach(() => { vi.clearAllMocks() })
 
     it('submits and shows success message on valid input', async () => {
         fetchFromBackEnd
-            .mockResolvedValueOnce({
-                status: 200,
-                data: departmentData
-            })
-            .mockResolvedValueOnce({
-                status: 201,
-                data: {}
-            })
+            .mockResolvedValueOnce({ status: 200, data: departmentData })
+            .mockResolvedValueOnce({ status: 201, data: {} })
 
-        renderComponent(<AddEmployeePage />)
+        renderComponent()
 
         await waitFor(() => { expect(fetchFromBackEnd).toHaveBeenCalled() })
 
         fireEvent.change(screen.getByLabelText('First name'), {
-            target: { value: employeeInput.first_name }
+            target: { value: employeeInput.firstName }
         })
         fireEvent.change(screen.getByLabelText('Last name'), {
-            target: { value: employeeInput.last_name }
+            target: { value: employeeInput.lastName }
         })
         fireEvent.change(screen.getByLabelText('Job title'), {
             target: { value: employeeInput.title }
+        })
+        fireEvent.change(screen.getByLabelText('Department'), {
+            target: { value: employeeInput.departmentId }
         })
         fireEvent.change(screen.getByLabelText('Email address'), {
             target: { value: employeeInput.email }
         })
         fireEvent.change(
             screen.getByLabelText('Country code for phone number'), {
-                target: { value: employeeInput.country_code }
+                target: { value: employeeInput.countryCode }
             }
         )
         fireEvent.change(
             screen.getByLabelText('Phone number without country code'), {
-                target: { value: employeeInput.phone_number }
+                target: { value: employeeInput.phoneNumber }
             }
         )
-        fireEvent.change(screen.getByLabelText('Department'), {
-            target: { value: employeeInput.department_id }
+        fireEvent.change(screen.getByLabelText('Active status'), {
+            target: { value: employeeInput.isActive }
         })
         fireEvent.change(screen.getByLabelText('Hire date'), {
-            target: { value: employeeInput.hire_date }
+            target: { value: employeeInput.hireDate }
         })
-
         fireEvent.click(screen.getAllByText('Submit')[0])
 
         await waitFor(() => {
@@ -107,48 +96,44 @@ describe('AddEmployeePage', () => {
 
     it('shows error message on failed API call', async () => {
         fetchFromBackEnd
-            .mockResolvedValueOnce({
-                status: 200,
-                data: departmentData
-            })
-            .mockResolvedValueOnce({
-                status: 500,
-                data: null
-            })
+            .mockResolvedValueOnce({ status: 200, data: departmentData })
+            .mockResolvedValueOnce({ status: 500, data: null })
 
-        renderComponent(<AddEmployeePage />)
+        renderComponent()
 
         await waitFor(() => { expect(fetchFromBackEnd).toHaveBeenCalled() })
 
         fireEvent.change(screen.getByLabelText('First name'), {
-            target: { value: employeeInput.first_name }
+            target: { value: employeeInput.firstName }
         })
         fireEvent.change(screen.getByLabelText('Last name'), {
-            target: { value: employeeInput.last_name }
+            target: { value: employeeInput.lastName }
         })
         fireEvent.change(screen.getByLabelText('Job title'), {
             target: { value: employeeInput.title }
+        })
+        fireEvent.change(screen.getByLabelText('Department'), {
+            target: { value: employeeInput.departmentId }
         })
         fireEvent.change(screen.getByLabelText('Email address'), {
             target: { value: employeeInput.email }
         })
         fireEvent.change(
             screen.getByLabelText('Country code for phone number'), {
-                target: { value: employeeInput.country_code }
+                target: { value: employeeInput.countryCode }
             }
         )
         fireEvent.change(
             screen.getByLabelText('Phone number without country code'), {
-                target: { value: employeeInput.phone_number }
+                target: { value: employeeInput.phoneNumber }
             }
         )
-        fireEvent.change(screen.getByLabelText('Department'), {
-            target: { value: employeeInput.department_id }
+        fireEvent.change(screen.getByLabelText('Active status'), {
+            target: { value: employeeInput.activeStatus }
         })
         fireEvent.change(screen.getByLabelText('Hire date'), {
-            target: { value: employeeInput.hire_date }
+            target: { value: employeeInput.hireDate }
         })
-
         fireEvent.click(screen.getAllByText('Submit')[0])
 
         await waitFor(() => {

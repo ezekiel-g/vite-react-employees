@@ -2,23 +2,29 @@ const formatDateAndTime = utcString => {
     if (!utcString) return 'Invalid date'
 
     const utcDate = new Date(utcString)
+
     const dateOptions = {
-	    year: 'numeric',
-	    month: '2-digit',
-	    day: '2-digit',
-	    hour: '2-digit',
-	    minute: '2-digit',
-	    hour12: true
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
     }
+
     const localDate = utcDate.toLocaleString('en-US', dateOptions)
-    const timeIndex = localDate.indexOf(', ') + 2
-    const time = localDate.slice(timeIndex)
-    const [hour, minute] = time.split(':')
-    const newHour = parseInt(hour, 10)
-    const formattedTime = `${newHour}:${minute}`
-    const datePart = utcDate.toISOString().split('T')[0]
-    const formattedDateAndTime = `${datePart} at ${formattedTime}`
-    
+    const [datePart, timePart] = localDate.split(', ')
+    const [month, day, year] = datePart.split('/')
+    const [hour, minute, period] = timePart.split(/[: ]/)
+    const formattedHour = hour.startsWith('0') ? hour[1] : hour
+
+    let formattedDateAndTime =
+        `${year}-${month}-${day} at ${formattedHour}:${minute} ${period}`
+
+    if (formattedHour === '12' && minute === '00' && period === 'AM') {
+        formattedDateAndTime = `${year}-${month}-${day}`
+    }
+
     return formattedDateAndTime
 }
 

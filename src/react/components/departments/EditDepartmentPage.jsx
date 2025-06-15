@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import fetchFromBackEnd from '../../../util/fetchFromBackEnd.js'
 import validateDepartment from '../../../util/validateDepartment.js'
-import messageUtility from '../../../util/messageUtility.jsx'
+import messageHelper from '../../../util/messageHelper.jsx'
 
 const EditDepartmentPage = () => {
     const [department, setDepartment] = useState({})
@@ -17,50 +17,22 @@ const EditDepartmentPage = () => {
 
     const editDepartment = async event => {
         event.preventDefault()
-        if (!window.confirm(`Edit ${department.name}?`)) return
-        window.scrollTo(0, 0)
         setSuccessMessages([])
         setErrorMessages([])
 
-        const newErrors = []
-        const changeCheckObject = {}
+        const validationResult = await validateDepartment(
+            { name, code, location },
+            id
+        )
 
-        const nameValid = validateDepartment.validateName(name)
-        if (!nameValid.valid) {
-            newErrors.push(nameValid.message)
-        } else {
-            changeCheckObject.name = name
-        }
-
-        const codeValid =
-            await validateDepartment.validateCode(code, department.id)
-        if (!codeValid.valid) {
-            newErrors.push(codeValid.message)
-        } else {
-            changeCheckObject.code = code
-        }
-
-        const locationValid = validateDepartment.validateLocation(location)
-        if (!locationValid.valid) {
-            newErrors.push(locationValid.message)
-        } else {
-            changeCheckObject.location = location
-        }
-        
-        if (newErrors.length === 0) {
-            const changeHappened =
-                await validateDepartment.checkForDepartmentChanges(
-                    changeCheckObject,
-                    department.id
-                )
-            
-            if (!changeHappened.valid) newErrors.push(changeHappened.message)
-        }
-
-        if (newErrors.length > 0) {
-            setErrorMessages(newErrors)
+        if (!validationResult.valid) {
+            setErrorMessages(validationResult.validationErrors)
             return
         }
+
+        if (!window.confirm(`Edit ${department.name}?`)) return
+
+        window.scrollTo(0, 0)
 
         const fetchResult = await fetchFromBackEnd(
             `${backEndUrl}/api/v1/departments/${department.id}`,
@@ -71,7 +43,10 @@ const EditDepartmentPage = () => {
         )
         
         if (fetchResult.status >= 200 && fetchResult.status < 300) {
-            setSuccessMessages(['Department edited successfully'])
+            setSuccessMessages(
+                fetchResult.data.successfulUpdates ||
+                ['Department edited successfully']
+            )
             return
         }
 
@@ -104,13 +79,11 @@ const EditDepartmentPage = () => {
         getDepartment()
     }, [getDepartment])
 
-    const successMessageDisplay =
-        messageUtility.displaySuccessMessages(successMessages)
-    const errorMessageDisplay =
-        messageUtility.displayErrorMessages(errorMessages)
+    const successMessageDisplay = messageHelper.showSuccesses(successMessages)
+    const errorMessageDisplay = messageHelper.showErrors(errorMessages)
     
     return (
-        <div className="container mt-4">
+        <div className="container col-md-10 offset-md-1 my-4">
             {successMessageDisplay}
             {errorMessageDisplay}
             <h2>Edit {department.name}</h2>
