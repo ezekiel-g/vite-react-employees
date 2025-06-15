@@ -37,6 +37,8 @@ describe('AddDepartmentPage', () => {
     afterEach(() => { vi.clearAllMocks() })
 
     it('submits and shows success message on valid input', async () => {
+        vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+
         fetchFromBackEnd.mockResolvedValue({
             status: 201,
             data: {}
@@ -61,6 +63,8 @@ describe('AddDepartmentPage', () => {
     })
 
     it('shows error message on failed API call', async () => {
+        vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+        
         fetchFromBackEnd.mockResolvedValue({
             status: 500,
             data: null

@@ -49,6 +49,7 @@ describe('EditDepartmentPage', () => {
     afterEach(() => { vi.clearAllMocks() })
 
     it('submits and shows success message on valid edit', async () => {
+        vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
         vi.spyOn(window, 'confirm').mockReturnValue(true)
 
         fetchFromBackEnd
@@ -80,6 +81,7 @@ describe('EditDepartmentPage', () => {
     })
 
     it('shows error message on failed API call', async () => {
+        vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
         vi.spyOn(window, 'confirm').mockReturnValue(true)
 
         fetchFromBackEnd
