@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import fetchFromBackEnd from '../../../util/fetchFromBackEnd.js'
 import validateDepartment from '../../../util/validateDepartment.js'
-import messageUtility from '../../../util/messageUtility.jsx'
+import messageHelper from '../../../util/messageHelper.jsx'
 
 const AddDepartmentPage = () => {
     const [name, setName] = useState('')
@@ -17,19 +17,12 @@ const AddDepartmentPage = () => {
         setSuccessMessages([])
         setErrorMessages([])
 
-        const newErrors = []
+        const validationResult = await validateDepartment(
+            { name, code, location }
+        )
 
-        const nameValid = validateDepartment.validateName(name)
-        if (!nameValid.valid) newErrors.push(nameValid.message)
-
-        const codeValid = await validateDepartment.validateCode(code)
-        if (!codeValid.valid) newErrors.push(codeValid.message)
-
-        const locationValid = validateDepartment.validateLocation(location)
-        if (!locationValid.valid) newErrors.push(locationValid.message)
-        
-        if (newErrors.length > 0) {
-            setErrorMessages(newErrors)
+        if (!validationResult.valid) {
+            setErrorMessages(validationResult.validationErrors)
             return
         }
 
@@ -55,13 +48,11 @@ const AddDepartmentPage = () => {
         )
     }
 
-    const successMessageDisplay =
-        messageUtility.displaySuccessMessages(successMessages)
-    const errorMessageDisplay =
-        messageUtility.displayErrorMessages(errorMessages)
+    const successMessageDisplay = messageHelper.showSuccesses(successMessages)
+    const errorMessageDisplay = messageHelper.showErrors(errorMessages)
 
     return (
-        <div className="container mt-4">
+        <div className="container col-md-10 offset-md-1 my-4">
             {successMessageDisplay}
             {errorMessageDisplay}            
             <h2>Add Department</h2>
@@ -117,7 +108,6 @@ const AddDepartmentPage = () => {
                     Submit
                 </button>
             </form>
-            <br />
         </div>
     )
 }

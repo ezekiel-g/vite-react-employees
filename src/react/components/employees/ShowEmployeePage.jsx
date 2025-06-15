@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import fetchFromBackEnd from '../../../util/fetchFromBackEnd.js'
-import messageUtility from '../../../util/messageUtility.jsx'
+import messageHelper from '../../../util/messageHelper.jsx'
 import formatDateAndTime from '../../../util/formatDateAndTime.js'
 
 const ShowEmployeePage = () => {
@@ -73,13 +73,11 @@ const ShowEmployeePage = () => {
     	getEmployee()
     }, [getEmployee])
 
-    const successMessageDisplay =
-        messageUtility.displaySuccessMessages(successMessages)
-    const errorMessageDisplay =
-        messageUtility.displayErrorMessages(errorMessages)
+    const successMessageDisplay = messageHelper.showSuccesses(successMessages)
+    const errorMessageDisplay = messageHelper.showErrors(errorMessages)
 
     return (
-        <div className="container mt-4">
+        <div className="container col-md-10 offset-md-1 my-4">
             {successMessageDisplay}
             {errorMessageDisplay}
             <h2>{employee.last_name}, {employee.first_name}</h2>
@@ -127,7 +125,7 @@ const ShowEmployeePage = () => {
 			        </tr>
 			        <tr>
 			            <td>Hire date</td>
-			            <td>{employee.hire_date}</td>
+			            <td>{formatDateAndTime(employee.hire_date)}</td>
 			        </tr>
 			        <tr>
 			            <td>Date created</td>
@@ -154,7 +152,7 @@ const ShowEmployeePage = () => {
                 >
                     Delete
                 </button>
-            </div>		
+            </div>
         </div>
     )
 }

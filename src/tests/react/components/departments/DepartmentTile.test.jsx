@@ -6,12 +6,10 @@ import DepartmentTile
 import fetchFromBackEnd from '../../../../util/fetchFromBackEnd.js'
 
 vi.mock('../../../../util/fetchFromBackEnd.js')
-vi.mock('../../../../util/messageUtility.jsx', () => ({
+vi.mock('../../../../util/messageHelper.jsx', () => ({
     default: {
-        displaySuccessMessages:
-            vi.fn(messages => <div>{messages.join(', ')}</div>),
-        displayErrorMessages:
-            vi.fn(messages => <div>{messages.join(', ')}</div>)
+        showSuccesses: vi.fn(messages => <div>{messages.join(', ')}</div>),
+        showErrors: vi.fn(messages => <div>{messages.join(', ')}</div>)
     }
 }))
 vi.mock('../../../../react/components/employees/EmployeeTile', () => ({
@@ -102,6 +100,7 @@ describe('DepartmentTile', () => {
         await waitFor(() => { expect(fetchFromBackEnd).toHaveBeenCalled() })
 
         const buttons = screen.getAllByRole('button')
+        
         fireEvent.click(buttons[0])
 
         await waitFor(() => {

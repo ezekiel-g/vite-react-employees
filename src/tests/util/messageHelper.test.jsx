@@ -1,17 +1,17 @@
 import { describe, it, expect, vi } from 'vitest'
-import messageUtility from '../../util/messageUtility.jsx'
+import messageHelper from '../../util/messageHelper.jsx'
 
-describe('messageUtility', () => {
-    describe('displaySuccessMessages', () => {
+describe('messageHelper', () => {
+    describe('showSuccesses', () => {
         it('returns null if messages array is empty', () => {
-            const output = messageUtility.displaySuccessMessages([])
+            const output = messageHelper.showSuccesses([])
 
             expect(output).toBeNull()
         })
 
         it('returns message divs for non-empty messages array', () => {
             const messages = ['Success 1', 'Success 2']
-            const output = messageUtility.displaySuccessMessages(messages)
+            const output = messageHelper.showSuccesses(messages)
 
             expect(output).toHaveLength(2)
             expect(output[0].props.children).toBe('Success 1')
@@ -19,10 +19,10 @@ describe('messageUtility', () => {
         })
     })
 
-    describe('displayErrorMessages', () => {
+    describe('showErrors', () => {
         it('returns null if messages array is empty', () => {
             const output =
-                messageUtility.displayErrorMessages([], 'http://example.com')
+                messageHelper.showErrors([], 'http://example.com')
 
             expect(output).toBeNull()
         })
@@ -31,7 +31,7 @@ describe('messageUtility', () => {
             const messages = ['Error 1', 'Error 2']
             const resolutionLink = 'http://example.com'
             const output =
-                messageUtility.displayErrorMessages(messages, resolutionLink)
+                messageHelper.showErrors(messages, resolutionLink)
 
             expect(output).toHaveLength(2)
             expect(output[0].props.children).toContain('Error 1')
@@ -45,7 +45,7 @@ describe('messageUtility', () => {
 
         it('returns error message divs without link if not provided', () => {
             const messages = ['Error 1', 'Error 2']
-            const output = messageUtility.displayErrorMessages(messages)
+            const output = messageHelper.showErrors(messages)
 
             expect(output).toHaveLength(2)
             expect(output[0].props.children).toContain('Error 1')
@@ -61,7 +61,7 @@ describe('messageUtility', () => {
             const setMessages = vi.fn()
             const messages = ['Message 1']
 
-            messageUtility.setMessagesWithTimeout(messages, setMessages)
+            messageHelper.setMessagesWithTimeout(messages, setMessages)
 
             expect(setMessages).toHaveBeenCalledWith(messages)
 

@@ -1,202 +1,300 @@
-import fetchFromBackEnd from './fetchFromBackEnd.js'
-import checkForDuplicate from './checkForDuplicate.js'
-import checkForChanges from './checkForChanges.js'
+import validationHelper from './validationHelper.js'
 
-const backEndUrl = import.meta.env.VITE_BACK_END_URL
+const validateFirstName = (input, currentValue = null) => {
+    if (!input || input.trim() === '') {
+        return { valid: false, message: 'First name required' }
+    }
 
-const getDepartments = async () => {
-    const fetchResult =
-        await fetchFromBackEnd(`${backEndUrl}/api/v1/departments`)
-    return fetchResult
+    if (!/^[A-Za-z'-\s]{1,100}$/.test(input)) {
+        return {
+            valid: false,
+            message: 'First name can be maximum 100 characters and can ' +
+                     'contain only letters, apostrophes, hyphens and ' +
+                     'spaces between words'
+        }
+    }
+
+    return validationHelper.returnSuccess('First name', input, currentValue)
 }
 
-const getEmployees = async () => {
-    const fetchResult =
-        await fetchFromBackEnd(`${backEndUrl}/api/v1/employees`)
-    return fetchResult
+const validateLastName = (input, currentValue = null) => {
+    if (!input || input.trim() === '') {
+        return { valid: false, message: 'Last name required' }
+    }
+
+    if (!/^[A-Za-z'-\s]{1,100}$/.test(input)) {
+        return {
+            valid: false,
+            message: 'Last name can be maximum 100 characters and can ' +
+                     'contain only letters, apostrophes, hyphens and ' +
+                     'spaces between words'
+        }
+    }
+
+    return validationHelper.returnSuccess('Last name', input, currentValue)
 }
 
-const validateEmployee = {
-    validateFirstName: firstName => {
-        if (!firstName || firstName.trim() === '') {
-            return { valid: false, message: 'First name required' }
+const validateTitle = (input, currentValue = null) => {
+    if (!input || input.trim() === '') {
+        return { valid: false, message: 'Job title required' }
+    }
+
+    if (!/^[A-Za-z'-\s]{1,100}$/.test(input)) {
+        return {
+            valid: false,
+            message: 'Job title can be maximum 100 characters and can ' +
+                     'contain only letters, apostrophes, hyphens and ' +
+                     'spaces between words'
         }
+    }
 
-        const firstNameRegex = /^[A-Za-z'-\s]{1,100}$/
+    return validationHelper.returnSuccess('Job title', input, currentValue)
+}
 
-        if (!firstNameRegex.test(firstName)) {
-            return {
-                valid: false,
-                message: 'First name can be maximum 100 characters and can ' +
-                         'contain only letters, apostrophes, hyphens and ' +
-                         'spaces between words.'
-            }
+const validateDepartmentId = async (input, currentValue = null) => {
+    if (!input) {
+        return { valid: false, message: 'Department required' }
+    }
+    
+    if (!(Number.isInteger(input) && input > 0)) {
+        return {
+            valid: false,
+            message: 'Department ID must be an integer greater than 0'
         }
+    }
+    
+    const departments = await validationHelper.getDepartments()
+    
+    if (!departments.some(row => row.id === input)) {
+        return { valid: false, message: 'Invalid department' }
+    }
+    
+    return validationHelper.returnSuccess('Department', input, currentValue)
+}
 
-        return { valid: true, message: '' }
-    },
-
-    validateLastName: lastName => {
-        if (!lastName || lastName.trim() === '') {
-            return { valid: false, message: 'Last name required' }
+const validateEmail = async (
+    input,
+    currentValue = null,
+    excludeId = null,
+    skipDuplicateCheck = null
+) => {
+    if (!input || input.trim() === '') {
+        return { valid: false, message: 'Email address required' }
+    }
+    
+    if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(input)) {
+        return {
+            valid: false,
+            message:
+            'Email address must contain only letters, numbers, ' +
+            'periods, underscores, hyphens, plus signs and percent ' +
+            'signs before the "@", a domain name after the "@", and ' +
+            'a valid domain extension (e.g. ".com", ".net", ".org") ' +
+            'of at least two letters'
         }
-
-        const lastNameRegex = /^[A-Za-z'-\s]{1,100}$/
-
-        if (!lastNameRegex.test(lastName)) {
-            return {
-                valid: false,
-                message: 'Last name can be maximum 100 characters and can ' +
-                         'contain only letters, apostrophes, hyphens and ' +
-                         'spaces between words.'
-            }
-        }
-
-        return { valid: true, message: '' }
-    },
-
-    validateTitle: title => {
-        if (!title || title.trim() === '') {
-            return { valid: false, message: 'Job title required' }
-        }
-
-        const titleRegex = /^[A-Za-z'-\s]{1,100}$/
-
-        if (!titleRegex.test(title)) {
-            return {
-                valid: false,
-                message: 'Job title can be maximum 100 characters and can ' +
-                         'contain only letters, apostrophes, hyphens and ' +
-                         'spaces between words.'
-            }
-        }
-
-        return { valid: true, message: '' }
-    },
-
-    validateEmail: async (
-        email,
-        excludeId = null,
-        skipDuplicateCheck = null
-    ) => {
-        if (!email || email.trim() === '') {
-            return { valid: false, message: 'Email address required' }
-        }
-
-        const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
-
-        if (!emailRegex.test(email)) {
-            return {
-                valid: false,
-                message:
-                    'Email address must contain only letters, numbers, ' +
-                    'periods, underscores, hyphens, plus signs and percent ' +
-                    'signs before the "@", a domain name after the "@", and ' +
-                    'a valid domain extension (e.g. ".com", ".net", ".org") ' +
-                    'of at least two letters'
-            }
-        }
-
-        if (skipDuplicateCheck !== 'skipDuplicateCheck') {
-            const duplicateCheck = await checkForDuplicate(
-                { email },
-                getEmployees,
-                Number(excludeId)
-            )
-
-            if (duplicateCheck !== 'pass') {
-                return { valid: false, message: 'Email address taken' }
-            }
-        }
-        
-        return { valid: true, message: '' }
-    },
-
-    validateHireDate: hireDate => {
-        if (!hireDate) {
-            return { valid: false, message: 'Hire date is required' }
-        }
-
-        return { valid: true, message: '' }
-    },
-
-    validateDepartmentId: async departmentId => {
-        if (!departmentId) {
-            return { valid: false, message: 'Department ID required' }
-        }
-        
-        if (!(Number.isInteger(departmentId) && departmentId > 0)) {
-            return {
-                valid: false,
-                message: 'Department ID must be an integer greater than 0'
-            }
-        }
-
-        const fetchResult = await getDepartments()
-        const departments = fetchResult.data
-
-        if (!departments.some(department => department.id === departmentId)) {
-            return { valid: false, message: 'Invalid department' }
-        }
-
-        return { valid: true, message: '' }
-    },
-
-    validateCountryCode: countryCode => {
-        if (!countryCode) {
-            return { valid: false, message: 'Country code required' }
-        }
-
-        const countryCodeRegex = /^\+?\d{1,4}$/
-
-        if (!countryCodeRegex.test(countryCode)) {
-            return {
-                valid: false,
-                message: 'Country code must be between 1 and 4 digits and ' +
-                         'may optionally start with "+"'
-            }
-        }
-
-        return { valid: true, message: '' }
-    },
-
-    validatePhoneNumber: phoneNumber => {
-        if (!phoneNumber) {
-            return { valid: false, message: 'Phone number required' }
-        }
-
-        const phoneNumberRegex = /^\d{7,15}$/
-
-        if (!phoneNumberRegex.test(phoneNumber)) {
-            return {
-                valid: false,
-                message: 'Phone number must be between 7 and 15 digits and ' +
-                         'contain only digits'
-            }
-        }
-
-        return { valid: true, message: '' }
-    },
-
-    validateIsActive: isActive => {
-        if (isActive !== 0 && isActive !== 1) {
-            return { valid: false, message: 'isActive must be 0 or 1' }
-        }
-
-        return { valid: true, message: '' }
-    },
-
-    checkForEmployeeChanges: async (entries, employeeId) => {
-        const changeHappened = await checkForChanges(
-            entries,
-            getEmployees,
-            Number(employeeId)
+    }
+    
+    if (!skipDuplicateCheck) {
+        const duplicateCheck = await validationHelper.checkForDuplicate(
+            { email: input },
+            validationHelper.getEmployees,
+            excludeId
         )
-
-        return changeHappened
-    }    
+        
+        if (duplicateCheck !== 'pass') {
+            return { valid: false, message: 'Email address taken' }
+        }
+    }
+    
+    return validationHelper.returnSuccess('Email address', input, currentValue)
 }
 
+const validateCountryCode = (input, currentValue = null) => {
+    if (!input || input.trim() === '') {
+        return { valid: false, message: 'Country code required' }
+    }
 
+    if (!/^\d{1,4}$/.test(input)) {
+        return {
+            valid: false,
+            message: 'Country code must be between 1 and 4 digits and ' +
+                     'contain only digits'
+        }
+    }
+
+    return validationHelper.returnSuccess('Country code', input, currentValue)
+}
+
+const validatePhoneNumber = (input, currentValue = null) => {
+    if (!input || input.trim() === '') {
+        return { valid: false, message: 'Phone number required' }
+    }
+
+    if (!/^\d{7,15}$/.test(input)) {
+        return {
+            valid: false,
+            message: 'Phone number must be between 7 and 15 digits and ' +
+                     'contain only digits'
+        }
+    }
+
+    return validationHelper.returnSuccess('Phone number', input, currentValue)
+}
+
+const validateIsActive = (input, currentValue = null) => {
+    if (input !== 0 && input !== 1) {
+        return { valid: false, message: 'Active status must be 0 or 1' }
+    }
+
+    return validationHelper.returnSuccess('Active status', input, currentValue)
+}
+
+const validateHireDate = (input, currentValue = null) => {
+    if (!input) {
+        return { valid: false, message: 'Hire date required' }
+    }
+    
+    if (currentValue && currentValue instanceof Date) {
+        currentValue = currentValue.toISOString().split('T')[0]
+    }
+    
+    return validationHelper.returnSuccess('Hire date', input, currentValue)
+}
+
+const validateEmployee = async (
+    inputObject,
+    excludeId = null,
+    skipDuplicateCheck = null
+) => {
+    const {
+        firstName,
+        lastName,
+        title,
+        email,
+        countryCode,
+        phoneNumber,
+        isActive,
+        departmentId,
+        hireDate
+    } = inputObject
+    const validationErrors = []
+    const successfulUpdates = []
+    let currentDetails = null
+
+    if (excludeId) {
+        excludeId = Number(excludeId)
+        const employees = await validationHelper.getEmployees()
+        currentDetails = employees.find(row => row.id === excludeId)
+    }
+    
+    const firstNameValid =
+        validateFirstName(firstName, currentDetails?.first_name)
+
+    if (!firstNameValid.valid) {
+        validationErrors.push(firstNameValid.message)
+    }
+
+    const lastNameValid = validateLastName(lastName, currentDetails?.last_name)
+
+    if (!lastNameValid.valid) {
+        validationErrors.push(lastNameValid.message)
+    } else {
+        if (lastNameValid.message) {
+            successfulUpdates.push(lastNameValid.message) 
+        }
+    }
+
+    const titleValid = validateTitle(title, currentDetails?.title)
+
+    if (!titleValid.valid) {
+        validationErrors.push(titleValid.message)
+    } else {
+        if (titleValid.message) {
+            successfulUpdates.push(titleValid.message) 
+        }
+    }
+
+    const departmentIdValid =
+        await validateDepartmentId(departmentId, currentDetails?.department_id)
+
+    if (!departmentIdValid.valid) {
+        validationErrors.push(departmentIdValid.message)
+    } else {
+        if (departmentIdValid.message) {
+            successfulUpdates.push(departmentIdValid.message) 
+        }
+    }
+
+    const emailValid = await validateEmail(
+        email,
+        currentDetails?.email,
+        excludeId,
+        skipDuplicateCheck
+    )
+
+    if (!emailValid.valid) {
+        validationErrors.push(emailValid.message)
+    } else {
+        if (emailValid.message) {
+            successfulUpdates.push(emailValid.message) 
+        }
+    }
+
+    const countryCodeValid =
+        validateCountryCode(countryCode, currentDetails?.country_code)
+
+    if (!countryCodeValid.valid) {
+        validationErrors.push(countryCodeValid.message)
+    } else {
+        if (countryCodeValid.message) {
+            successfulUpdates.push(countryCodeValid.message) 
+        }
+    }
+
+    const phoneNumberValid =
+        validatePhoneNumber(phoneNumber, currentDetails?.phone_number)
+
+    if (!phoneNumberValid.valid) {
+        validationErrors.push(phoneNumberValid.message)
+    } else {
+        if (phoneNumberValid.message) {
+            successfulUpdates.push(phoneNumberValid.message) 
+        }
+    }    
+
+    const isActiveValid = validateIsActive(isActive, currentDetails?.is_active)
+
+    if (!isActiveValid.valid) {
+        validationErrors.push(isActiveValid.message)
+    } else {
+        if (isActiveValid.message) {
+            successfulUpdates.push(isActiveValid.message) 
+        }
+    }
+
+    const hireDateValid = validateHireDate(hireDate, currentDetails?.hire_date)
+
+    if (!hireDateValid.valid) {
+        validationErrors.push(hireDateValid.message)
+    } else {
+        if (hireDateValid.message) {
+            successfulUpdates.push(hireDateValid.message) 
+        }
+    }
+    
+    if (
+        excludeId &&
+        validationErrors.length === 0 &&
+        successfulUpdates.length === 0
+    ) {
+        validationErrors.push('No changes detected')
+    }
+    
+    if (validationErrors.length > 0) {
+        return { valid: false, validationErrors }
+    }
+
+    return { valid: true }     
+}
 
 export default validateEmployee

@@ -7,25 +7,27 @@ import fetchFromBackEnd from '../../../../util/fetchFromBackEnd.js'
 
 vi.mock('../../../../util/fetchFromBackEnd.js')
 vi.mock('../../../../util/validateEmployee.js', () => ({
-    default: {
-        validateFirstName: vi.fn(() => ({ valid: true })),
-        validateLastName: vi.fn(() => ({ valid: true })),
-        validateTitle: vi.fn(() => ({ valid: true })),
-        validateEmail: vi.fn(async () => ({ valid: true })),
-        validateHireDate: vi.fn(() => ({ valid: true })),
-        validateDepartmentId: vi.fn(async () => ({ valid: true })),
-        validateCountryCode: vi.fn(() => ({ valid: true })),
-        validatePhoneNumber: vi.fn(() => ({ valid: true })),
-        validateIsActive: vi.fn(() => ({ valid: true })),
-        checkForEmployeeChanges: vi.fn(async () => ({ valid: true }))
-    }
+    default: vi.fn(() => ({
+        valid: true,
+        validationErrors: []
+    })),
+    getEmployees: vi.fn(() => Promise.resolve([{
+        id: 1,
+        first_name: 'John',
+        last_name: 'Doe',
+        title: 'Developer',
+        department_id: 1,
+        email: 'john.doe@example.com',
+        country_code: '1',
+        phone_number: '1234567890',
+        is_active: 1,
+        hire_date: '2020-01-01'
+    }]))
 }))
-vi.mock('../../../../util/messageUtility.jsx', () => ({
+vi.mock('../../../../util/messageHelper.jsx', () => ({
     default: {
-        displaySuccessMessages:
-            vi.fn(messages => <div>{messages.join(', ')}</div>),
-        displayErrorMessages:
-            vi.fn(messages => <div>{messages.join(', ')}</div>)
+        showSuccesses: vi.fn(messages => <div>{messages.join(', ')}</div>),
+        showErrors: vi.fn(messages => <div>{messages.join(', ')}</div>)
     }
 }))
 
@@ -44,33 +46,34 @@ const renderComponent = () => {
 
 const originalEmployee = {
     id: 1,
-    first_name: 'John',
-    last_name: 'Doe',
+    firstName: 'John',
+    lastName: 'Doe',
     title: 'Developer',
+    departmentId: 1,
     email: 'john.doe@example.com',
-    hire_date: '2020-01-01',
-    department_id: 1,
-    country_code: '+1',
-    phone_number: '1234567890',
-    is_active: 1
+    countryCode: '1',
+    phoneNumber: '1234567890',
+    isActive: 1,
+    hireDate: '2020-01-01'
 }
 
 const updatedEmployee = {
-    first_name: 'Michael',
-    last_name: 'Smith',
+    firstName: 'Michael',
+    lastName: 'Smith',
     title: 'Senior Developer',
+    departmentId: 1,
     email: 'michael.smith@example.com',
-    hire_date: '2021-05-10',
-    department_id: '1',
-    country_code: '+44',
-    phone_number: '9876543210'
+    countryCode: '1',
+    phoneNumber: '9876543210',
+    isActive: 0,
+    hireDate: '2021-05-10'
 }
 
-const departments = [{ id: 1, name: 'Engineering' }]
+const departments = [{ id: 1, name: 'IT' }]
 
 describe('EditEmployeePage', () => {
     afterEach(() => { vi.clearAllMocks() })
-    
+
     it('submits and shows success message on valid edit', async () => {
         vi.spyOn(window, 'confirm').mockReturnValue(true)
 
@@ -86,32 +89,35 @@ describe('EditEmployeePage', () => {
         })
 
         fireEvent.change(screen.getByLabelText('First name'), {
-            target: { value: updatedEmployee.first_name }
+            target: { value: updatedEmployee.firstName }
         })
         fireEvent.change(screen.getByLabelText('Last name'), {
-            target: { value: updatedEmployee.last_name }
+            target: { value: updatedEmployee.lastName }
         })
         fireEvent.change(screen.getByLabelText('Job title'), {
             target: { value: updatedEmployee.title }
+        })
+        fireEvent.change(screen.getByLabelText('Department'), {
+            target: { value: updatedEmployee.departmentId }
         })
         fireEvent.change(screen.getByLabelText('Email address'), {
             target: { value: updatedEmployee.email }
         })
         fireEvent.change(
             screen.getByLabelText('Country code for phone number'), {
-                target: { value: updatedEmployee.country_code }
+                target: { value: updatedEmployee.countryCode }
             }
         )
         fireEvent.change(
             screen.getByLabelText('Phone number without country code'), {
-                target: { value: updatedEmployee.phone_number }
+                target: { value: updatedEmployee.phoneNumber }
             }
         )
-        fireEvent.change(screen.getByLabelText('Department'), {
-            target: { value: updatedEmployee.department_id }
+        fireEvent.change(screen.getByLabelText('Active status'), {
+            target: { value: updatedEmployee.isActive }
         })
         fireEvent.change(screen.getByLabelText('Hire date'), {
-            target: { value: updatedEmployee.hire_date }
+            target: { value: updatedEmployee.hireDate }
         })
         fireEvent.click(screen.getAllByText('Submit')[0])
 
@@ -137,32 +143,35 @@ describe('EditEmployeePage', () => {
         })
 
         fireEvent.change(screen.getByLabelText('First name'), {
-            target: { value: updatedEmployee.first_name }
+            target: { value: updatedEmployee.firstName }
         })
         fireEvent.change(screen.getByLabelText('Last name'), {
-            target: { value: updatedEmployee.last_name }
+            target: { value: updatedEmployee.lastName }
         })
         fireEvent.change(screen.getByLabelText('Job title'), {
             target: { value: updatedEmployee.title }
+        })
+        fireEvent.change(screen.getByLabelText('Department'), {
+            target: { value: updatedEmployee.departmentId }
         })
         fireEvent.change(screen.getByLabelText('Email address'), {
             target: { value: updatedEmployee.email }
         })
         fireEvent.change(
             screen.getByLabelText('Country code for phone number'), {
-                target: { value: updatedEmployee.country_code }
+                target: { value: updatedEmployee.countryCode }
             }
         )
         fireEvent.change(
             screen.getByLabelText('Phone number without country code'), {
-                target: { value: updatedEmployee.phone_number }
+                target: { value: updatedEmployee.phoneNumber }
             }
         )
-        fireEvent.change(screen.getByLabelText('Department'), {
-            target: { value: updatedEmployee.department_id }
+        fireEvent.change(screen.getByLabelText('Active status'), {
+            target: { value: updatedEmployee.isActive }
         })
         fireEvent.change(screen.getByLabelText('Hire date'), {
-            target: { value: updatedEmployee.hire_date }
+            target: { value: updatedEmployee.hireDate }
         })
         fireEvent.click(screen.getAllByText('Submit')[0])
 

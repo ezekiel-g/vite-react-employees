@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import EmployeeTile from '../employees/EmployeeTile'
 import fetchFromBackEnd from '../../../util/fetchFromBackEnd.js'
-import messageUtility from '../../../util/messageUtility.jsx'
+import messageHelper from '../../../util/messageHelper.jsx'
 
 const DepartmentTile = ({ department }) => {
     const [employees, setEmployees] = useState([])
@@ -38,10 +38,8 @@ const DepartmentTile = ({ department }) => {
         getEmployees()
     }, [getEmployees])
 
-    const successMessageDisplay =
-        messageUtility.displaySuccessMessages(successMessages)
-    const errorMessageDisplay =
-        messageUtility.displayErrorMessages(errorMessages)
+    const successMessageDisplay = messageHelper.showSuccesses(successMessages)
+    const errorMessageDisplay = messageHelper.showErrors(errorMessages)
 
     const employeeDisplay = employees.map((employee, index) => {
         return (

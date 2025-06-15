@@ -1,19 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
 import fetchFromBackEnd from '../../../util/fetchFromBackEnd.js'
 import validateEmployee from '../../../util/validateEmployee.js'
-import messageUtility from '../../../util/messageUtility.jsx'
+import messageHelper from '../../../util/messageHelper.jsx'
 
 const AddEmployeePage = () => {
     const [departments, setDepartments] = useState([])
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
     const [title, setTitle] = useState('')
-    const [email, setEmail] = useState('')
-    const [hireDate, setHireDate] = useState('')
     const [departmentId, setDepartmentId] = useState('')
+    const [email, setEmail] = useState('')
     const [countryCode, setCountryCode] = useState('')
     const [phoneNumber, setPhoneNumber] = useState('')
     const [isActive, setIsActive] = useState(1)
+    const [hireDate, setHireDate] = useState('')
     const [successMessages, setSuccessMessages] = useState([])
     const [errorMessages, setErrorMessages] = useState([])
     const backEndUrl = import.meta.env.VITE_BACK_END_URL
@@ -24,40 +24,22 @@ const AddEmployeePage = () => {
         setSuccessMessages([])
         setErrorMessages([])
 
-        const newErrors = []
+        const validationResult = await validateEmployee(
+            {
+                firstName,
+                lastName,
+                title,
+                departmentId,
+                email,
+                countryCode,
+                phoneNumber,
+                isActive,
+                hireDate
+            }
+        )
 
-        const firstNameValid = validateEmployee.validateFirstName(firstName)
-        if (!firstNameValid.valid) newErrors.push(firstNameValid.message)
-
-        const lastNameValid = validateEmployee.validateLastName(lastName)
-        if (!lastNameValid.valid) newErrors.push(lastNameValid.message)
-
-        const titleValid = validateEmployee.validateTitle(title)
-        if (!titleValid.valid) newErrors.push(titleValid.message)  
-
-        const emailValid = await validateEmployee.validateEmail(email)
-        if (!emailValid.valid) newErrors.push(emailValid.message)
-
-        const hireDateValid = validateEmployee.validateHireDate(hireDate)
-        if (!hireDateValid.valid) newErrors.push(hireDateValid.message)
-
-        const departmentIdValid =
-            await validateEmployee.validateDepartmentId(departmentId)
-        if (!departmentIdValid.valid) newErrors.push(departmentIdValid.message)
-
-        const countryCodeValid =
-            validateEmployee.validateCountryCode(countryCode)
-        if (!countryCodeValid.valid) newErrors.push(countryCodeValid.message)
-
-        const phoneNumberValid =
-            validateEmployee.validatePhoneNumber(phoneNumber)
-        if (!phoneNumberValid.valid) newErrors.push(phoneNumberValid.message)
-
-        const isActiveValid = validateEmployee.validateIsActive(isActive)
-        if (!isActiveValid.valid) newErrors.push(isActiveValid.message)        
-
-        if (newErrors.length > 0) {
-            setErrorMessages(newErrors)
+        if (!validationResult.valid) {
+            setErrorMessages(validationResult.validationErrors)
             return
         }
 
@@ -70,12 +52,12 @@ const AddEmployeePage = () => {
                 firstName,
                 lastName,
                 title,
-                email,
-                hireDate,
                 departmentId,
+                email,
                 countryCode,
                 phoneNumber,
-                isActive
+                isActive,
+                hireDate
             }
         )
 
@@ -118,10 +100,8 @@ const AddEmployeePage = () => {
         getDepartments()
     }, [getDepartments])
 
-    const successMessageDisplay =
-        messageUtility.displaySuccessMessages(successMessages)
-    const errorMessageDisplay =
-        messageUtility.displayErrorMessages(errorMessages)
+    const successMessageDisplay = messageHelper.showSuccesses(successMessages)
+    const errorMessageDisplay = messageHelper.showErrors(errorMessages)
 
     const departmentOptions = departments.map(department => {
         return (
@@ -132,7 +112,7 @@ const AddEmployeePage = () => {
     })
 
     return (
-        <div className="container mt-4">
+        <div className="container col-md-10 offset-md-1 my-4">
             {successMessageDisplay}
             {errorMessageDisplay}
             <h2>Add Employee</h2>
@@ -174,6 +154,26 @@ const AddEmployeePage = () => {
                         value={title}
                         onChange={event => setTitle(event.target.value)}
                     />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="departmentId" className="form-label">
+                        Department
+                    </label>
+                    <select
+                        className="form-control rounded-0"
+                        id="departmentId"
+                        value={departmentId}
+                        onChange={event => {
+                            setDepartmentId(
+                                event.target.value === ''
+                                    ? ''
+                                    : parseInt(event.target.value, 10)
+                            )
+                        }}
+                    >
+                        <option value="">Select department...</option>
+                        {departmentOptions}
+                    </select>
                 </div>
                 <div className="mb-3">
                     <label htmlFor="email" className="form-label">
@@ -232,26 +232,6 @@ const AddEmployeePage = () => {
                     </div>
                 </div>
                 <div className="mb-3">
-                    <label htmlFor="departmentId" className="form-label">
-                        Department
-                    </label>
-                    <select
-                        className="form-control rounded-0"
-                        id="departmentId"
-                        value={departmentId}
-                        onChange={event => {
-                            setDepartmentId(
-                                event.target.value === ''
-                                    ? ''
-                                    : parseInt(event.target.value, 10)
-                            )
-                        }}
-                    >
-                        <option value="">Select department...</option>
-                        {departmentOptions}
-                    </select>
-                </div>
-                <div className="mb-3">
                     <label htmlFor="hireDate" className="form-label">
                         Hire date
                     </label>
@@ -272,7 +252,6 @@ const AddEmployeePage = () => {
                     Submit
                 </button>
             </form>
-            <br />
         </div>
     )
 }

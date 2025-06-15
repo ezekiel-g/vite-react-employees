@@ -1,101 +1,113 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import validateDepartment from '../../util/validateDepartment.js'
-import checkForDuplicate from '../../util/checkForDuplicate.js'
-import checkForChanges from '../../util/checkForChanges.js'
+import validationHelper from '../../util/validationHelper.js'
 
-vi.mock('../../util/checkForDuplicate')
-vi.mock('../../util/checkForChanges')
+vi.mock('../../util/validationHelper.js')
 
 describe('validateDepartment', () => {
-    it('validates name correctly', () => {
-        const validName = 'Marketing'
-        const invalidName1 = ''
-        const invalidName2 = 'M@rketing'
-        const invalidName3 = 'A'.repeat(101)
+    const defaultInput = { name: 'IT', code: 'IT1', location: 'New York' }
+    const existingDepartments = [
+        { id: 1, name: 'IT', code: 'IT1', location: 'New York' },
+        { id: 2, name: 'HR', code: 'HR1', location: 'San Francisco' }
+    ]  
+    let inputObject
 
-        expect(validateDepartment.validateName(validName).valid).toBe(true)
-        expect(validateDepartment.validateName(invalidName1).valid).toBe(false)
-        expect(validateDepartment.validateName(invalidName2).valid).toBe(false)
-        expect(validateDepartment.validateName(invalidName3).valid).toBe(false)
+    beforeEach(() => {
+        inputObject = Object.assign({}, defaultInput)
+        validationHelper.checkForDuplicate.mockResolvedValue('pass')
+        validationHelper.returnSuccess
+            .mockReturnValue({ valid: true, message: '' })
+        vi.spyOn(validationHelper, 'getDepartments')
+            .mockResolvedValue(existingDepartments)
     })
 
-    it('validates code correctly', async () => {
-        const validCode = 'ABC123'
-        const invalidCode1 = ''
-        const invalidCode2 = 'AB123#'
-        const duplicateCode = 'DUPLICATE'
+    afterEach(() => { vi.clearAllMocks() })
 
-        checkForDuplicate.mockResolvedValueOnce('pass')
-        checkForDuplicate.mockResolvedValueOnce('fail')
+    it('returns validation error for empty name', async () => {
+        inputObject.name = ''
+        const validationResult = await validateDepartment(inputObject)
 
-        const validResult = await validateDepartment.validateCode(validCode)
-        const invalidResult1 =
-            await validateDepartment.validateCode(invalidCode1)
-        const invalidResult2 =
-            await validateDepartment.validateCode(invalidCode2)
-        const invalidResult3 =
-            await validateDepartment.validateCode(duplicateCode)
-
-        expect(validResult.valid).toBe(true)
-        expect(invalidResult1.valid).toBe(false)
-        expect(invalidResult2.valid).toBe(false)
-        expect(invalidResult3.valid).toBe(false)
+        expect(validationResult).toEqual({
+            valid: false,
+            validationErrors: ['Name required']
+        })
     })
 
-    it('validates location correctly', () => {
-        const validLocation = 'New York'
-        const invalidLocation1 = ''
-        const invalidLocation2 = 'Chicago'
+    it('returns validation error for invalid name format', async () => {
+        inputObject.name = 'Name&'
+        const validationResult = await validateDepartment(inputObject)
 
-        expect(validateDepartment.validateLocation(validLocation).valid).toBe(
-            true
-        )
-        expect(
-            validateDepartment.validateLocation(invalidLocation1).valid
-        ).toBe(false)
-        expect(
-            validateDepartment.validateLocation(invalidLocation2).valid
-        ).toBe(false)
+        expect(validationResult).toEqual({
+            valid: false,
+            validationErrors:
+                expect.arrayContaining([expect.stringContaining('can be')])
+        })
     })
 
-    it('validates isActive correctly', () => {
-        const validIsActive1 = 0
-        const validIsActive2 = 1
-        const invalidIsActive = 2
+    it('returns validation error for empty code', async () => {
+        inputObject.code = ''
+        const validationResult = await validateDepartment(inputObject)
 
-        expect(
-            validateDepartment.validateIsActive(validIsActive1).valid
-        ).toBe(true)
-        expect(
-            validateDepartment.validateIsActive(validIsActive2).valid
-        ).toBe(true)
-        expect(
-            validateDepartment.validateIsActive(invalidIsActive).valid
-        ).toBe(false)
+        expect(validationResult).toEqual({
+            valid: false,
+            validationErrors: ['Code required']
+        })
     })
 
-    it('checks for department changes correctly', async () => {
-        const mockEntries = [{ code: 'ABC123', name: 'Marketing' }]
-        const departmentId = 1
+    it('returns validation error for invalid code format', async () => {
+        inputObject.code = 'A&'
+        const validationResult = await validateDepartment(inputObject)
 
-        checkForChanges.mockResolvedValue(true)
+        expect(validationResult).toEqual({
+            valid: false,
+            validationErrors:
+                expect.arrayContaining([expect.stringContaining('can be')])
+        })
+    })
 
-        const changeHappened =
-            await validateDepartment.checkForDepartmentChanges(
-                mockEntries,
-                departmentId
-            )
+    it('returns validation error for duplicate code', async () => {
+        validationHelper.checkForDuplicate.mockResolvedValue('fail')
+        const validationResult = await validateDepartment(inputObject)
 
-        expect(changeHappened).toBe(true)
+        expect(validationResult).toEqual({
+            valid: false,
+            validationErrors: ['Code taken']
+        })
+    })
 
-        checkForChanges.mockResolvedValue(false)
+    it('returns validation error for empty location', async () => {
+        inputObject.location = ''
+        const validationResult = await validateDepartment(inputObject)
+
+        expect(validationResult).toEqual({
+            valid: false,
+            validationErrors: ['Location required']
+        })
+    })
+
+    it('returns validation error for invalid location', async () => {
+        inputObject.location = 'Chicago'
+        const validationResult = await validateDepartment(inputObject)
+
+        expect(validationResult).toEqual({
+            valid: false,
+            validationErrors:
+                expect.arrayContaining([expect.stringContaining('Location no')])
+        })
+    })
+
+    it('returns error when no changes are detected', async () => {
+        const validationResult = await validateDepartment(inputObject, 1)
         
-        const changeDidNotHappen =
-            await validateDepartment.checkForDepartmentChanges(
-                mockEntries,
-                departmentId
-            )
+        expect(validationResult).toEqual({
+            valid: false,
+            validationErrors: ['No changes detected']
+        })
+    })
 
-        expect(changeDidNotHappen).toBe(false)
+    it('returns { valid: true } if no validation errors', async () => {
+        const validationResult = await validateDepartment(inputObject)
+
+        expect(validationResult.valid).toEqual(true)
     })
 })

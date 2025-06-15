@@ -11,7 +11,7 @@ const departmentData = [
     {
         id: 1,
         name: 'IT',
-        code: 'ABC123',
+        code: 'IT1',
         location: 'New York',
         created_at: '2023-01-01T12:00:00Z',
         updated_at: '2023-06-01T15:00:00Z'
@@ -46,15 +46,12 @@ describe('ShowDepartmentPage', () => {
 
         expect(screen.getByText('ID')).toBeDefined()
         expect(screen.getAllByText('IT').length).toBeGreaterThan(0)
-        expect(screen.getByText('ABC123')).toBeDefined()
+        expect(screen.getByText('IT1')).toBeDefined()
         expect(screen.getByText('New York')).toBeDefined()
     })
 
     it('displays error message on fetch failure', async () => {
-        fetchFromBackEnd.mockResolvedValue({
-            status: 500,
-            data: null
-        })
+        fetchFromBackEnd.mockResolvedValue({ status: 500, data: null })
 
         renderComponent()
 

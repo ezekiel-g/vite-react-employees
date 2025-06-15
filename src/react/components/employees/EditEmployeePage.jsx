@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import fetchFromBackEnd from '../../../util/fetchFromBackEnd.js'
 import validateEmployee from '../../../util/validateEmployee.js'
-import messageUtility from '../../../util/messageUtility.jsx'
+import messageHelper from '../../../util/messageHelper.jsx'
 
 const EditEmployeePage = () => {
     const [employee, setEmployee] = useState({})
@@ -10,12 +10,12 @@ const EditEmployeePage = () => {
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
     const [title, setTitle] = useState('')
-    const [email, setEmail] = useState('')
-    const [hireDate, setHireDate] = useState('')
     const [departmentId, setDepartmentId] = useState('')
+    const [email, setEmail] = useState('')
     const [countryCode, setCountryCode] = useState('')
     const [phoneNumber, setPhoneNumber] = useState('')
     const [isActive, setIsActive] = useState(1)
+    const [hireDate, setHireDate] = useState('')
     const [successMessages, setSuccessMessages] = useState([])
     const [errorMessages, setErrorMessages] = useState([])
     const navigate = useNavigate()
@@ -24,7 +24,29 @@ const EditEmployeePage = () => {
 
     const editEmployee = async event => {
         event.preventDefault()
-        
+        setSuccessMessages([])
+        setErrorMessages([])
+
+        const validationResult = await validateEmployee(
+            {
+                firstName,
+                lastName,
+                title,
+                departmentId,
+                email,
+                countryCode,
+                phoneNumber,
+                isActive,
+                hireDate
+            },
+            id
+        )
+
+        if (!validationResult.valid) {
+            setErrorMessages(validationResult.validationErrors)
+            return
+        }        
+
         if (
             !window.confirm(
                 `Edit ${employee.last_name}, ${employee.first_name}?`
@@ -34,93 +56,6 @@ const EditEmployeePage = () => {
         }
 
         window.scrollTo(0, 0)
-        setSuccessMessages([])
-        setErrorMessages([])
-
-        const newErrors = []
-        const changeCheckObject = {}
-
-        const firstNameValid = validateEmployee.validateFirstName(firstName)
-        if (!firstNameValid.valid) {
-            newErrors.push(firstNameValid.message)
-        } else {
-            changeCheckObject.firstName = firstName
-        }
-
-        const lastNameValid = validateEmployee.validateLastName(lastName)
-        if (!lastNameValid.valid) {
-            newErrors.push(lastNameValid.message)
-        } else {
-            changeCheckObject.lastName = lastName 
-        }
-
-        const titleValid = validateEmployee.validateTitle(title)
-        if (!titleValid.valid) {
-            newErrors.push(titleValid.message)
-        } else {
-            changeCheckObject.title = title 
-        }
-
-        const emailValid =
-            await validateEmployee.validateEmail(email, employee.id)
-        if (!emailValid.valid) {
-            newErrors.push(emailValid.message)
-        } else {
-            changeCheckObject.email = email 
-        }
-
-        const hireDateValid = validateEmployee.validateHireDate(hireDate)
-        if (!hireDateValid.valid) {
-            newErrors.push(hireDateValid.message)
-        } else {
-            changeCheckObject.hireDate = hireDate
-        }
-
-        const departmentIdValid =
-            await validateEmployee.validateDepartmentId(departmentId)
-        if (!departmentIdValid.valid) {
-            newErrors.push(departmentIdValid.message)
-        } else {
-            changeCheckObject.departmentId = departmentId 
-        }
-
-        const countryCodeValid =
-            validateEmployee.validateCountryCode(countryCode)
-        if (!countryCodeValid.valid) {
-            newErrors.push(countryCodeValid.message)
-        } else {
-            changeCheckObject.countryCode = countryCode 
-        }
-
-        const phoneNumberValid =
-            validateEmployee.validatePhoneNumber(phoneNumber)
-        if (!phoneNumberValid.valid) {
-            newErrors.push(phoneNumberValid.message)
-        } else {
-            changeCheckObject.phoneNumber = phoneNumber
-        }
-
-        const isActiveValid = validateEmployee.validateIsActive(isActive)
-        if (!isActiveValid.valid) {
-            newErrors.push(isActiveValid.message)
-        } else {
-            changeCheckObject.isActive = isActive
-        }
-
-        if (newErrors.length === 0) {
-            const changeHappened =
-                await validateEmployee.checkForEmployeeChanges(
-                    changeCheckObject,
-                    employee.id
-                )
-            
-            if (!changeHappened.valid) newErrors.push(changeHappened.message)
-        }
-
-        if (newErrors.length > 0) {
-            setErrorMessages(newErrors)
-            return
-        }
 
         const fetchResult = await fetchFromBackEnd(
             `${backEndUrl}/api/v1/employees/${employee.id}`,
@@ -131,17 +66,20 @@ const EditEmployeePage = () => {
                 firstName,
                 lastName,
                 title,
-                email,
-                hireDate,
                 departmentId,
+                email,
                 countryCode,
                 phoneNumber,
-                isActive
+                isActive,
+                hireDate
             }
         )
         
         if (fetchResult.status >= 200 && fetchResult.status < 300) {
-            setSuccessMessages(['Employee edited successfully'])
+            setSuccessMessages(
+                fetchResult.data.successfulUpdates ||
+                ['Employee edited successfully']
+            )
             return
         }
 
@@ -173,12 +111,20 @@ const EditEmployeePage = () => {
             setFirstName(fetchResult.data[0]?.first_name)
             setLastName(fetchResult.data[0]?.last_name)
             setTitle(fetchResult.data[0]?.title)
-            setEmail(fetchResult.data[0]?.email)
-            setHireDate(fetchResult.data[0]?.hire_date)
             setDepartmentId(fetchResult.data[0]?.department_id)
+            setEmail(fetchResult.data[0]?.email)
             setCountryCode(fetchResult.data[0]?.country_code)
             setPhoneNumber(fetchResult.data[0]?.phone_number)
             setIsActive(fetchResult.data[0]?.is_active)
+            
+            const hireDate = fetchResult.data[0]?.hire_date
+
+            if (hireDate && !isNaN(new Date(hireDate))) {
+                setHireDate(new Date(hireDate).toISOString().split('T')[0])
+            } else {
+                setHireDate('')
+            }
+
             return
         }
         
@@ -192,10 +138,8 @@ const EditEmployeePage = () => {
         getEmployee()
     }, [getEmployee, getDepartments])
 
-    const successMessageDisplay =
-        messageUtility.displaySuccessMessages(successMessages)
-    const errorMessageDisplay =
-        messageUtility.displayErrorMessages(errorMessages)
+    const successMessageDisplay = messageHelper.showSuccesses(successMessages)
+    const errorMessageDisplay = messageHelper.showErrors(errorMessages)
 
     const departmentOptions = departments.map(department => {
         return (
@@ -206,7 +150,7 @@ const EditEmployeePage = () => {
     })
     
     return (
-        <div className="container mt-4">
+        <div className="container col-md-10 offset-md-1 my-4">
             {successMessageDisplay}
             {errorMessageDisplay}
             <h2>Edit {employee.last_name}, {employee.first_name}</h2>
@@ -247,8 +191,28 @@ const EditEmployeePage = () => {
                         className="form-control rounded-0"
                         id="title"
                         value={title}
-                        onChange={event => setLastName(event.target.value)}
+                        onChange={event => setTitle(event.target.value)}
                     />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="departmentId" className="form-label">
+                        Department
+                    </label>
+                    <select
+                        className="form-control rounded-0"
+                        id="departmentId"
+                        value={departmentId}
+                        onChange={event => {
+                            setDepartmentId(
+                                event.target.value === ''
+                                    ? ''
+                                    : parseInt(event.target.value, 10)
+                            )
+                        }}
+                    >
+                        <option value="">Select department...</option>
+                        {departmentOptions}
+                    </select>
                 </div>
                 <div className="mb-3">
                     <label htmlFor="email" className="form-label">
@@ -307,26 +271,6 @@ const EditEmployeePage = () => {
                     </div>
                 </div>
                 <div className="mb-3">
-                    <label htmlFor="departmentId" className="form-label">
-                        Department
-                    </label>
-                    <select
-                        className="form-control rounded-0"
-                        id="departmentId"
-                        value={departmentId}
-                        onChange={event => {
-                            setDepartmentId(
-                                event.target.value === ''
-                                    ? ''
-                                    : parseInt(event.target.value, 10)
-                            )
-                        }}
-                    >
-                        <option value="">Select department...</option>
-                        {departmentOptions}
-                    </select>
-                </div>
-                <div className="mb-3">
                     <label htmlFor="hireDate" className="form-label">
                         Hire date
                     </label>
@@ -339,6 +283,7 @@ const EditEmployeePage = () => {
                     />
                 </div>
 
+                <br />
                 <button 
                     type="submit"
                     className="btn btn-primary mb-3 rounded-0 me-2"

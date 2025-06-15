@@ -1,94 +1,127 @@
-import fetchFromBackEnd from './fetchFromBackEnd.js'
-import checkForDuplicate from './checkForDuplicate.js'
-import checkForChanges from './checkForChanges.js'
+import validationHelper from './validationHelper.js'
 
-const backEndUrl = import.meta.env.VITE_BACK_END_URL
+const validateName = (input, currentValue = null) => {
+    if (!input || input.trim() === '') {
+        return { valid: false, message: 'Name required' }
+    }
 
-const getDepartments = async () => {
-    const fetchResult =
-        await fetchFromBackEnd(`${backEndUrl}/api/v1/departments`)
-    return fetchResult
+    if (!/^[A-Za-z0-9\s\-'.,]{1,100}$/.test(input)) {
+        return {
+            valid: false,
+            message: 'Name can be maximum 100 characters and can contain ' +
+                     'only letters, numbers, spaces, hyphens, ' +
+                     'apostrophes and periods'
+        }
+    }
+    
+    return validationHelper.returnSuccess('Name', input, currentValue)
 }
 
-const validateDepartment = {
-    validateName: name => {
-        if (!name || name.trim() === '') {
-            return { valid: false, message: 'Name required' }
+const validateCode = async (
+    input,
+    currentValue = null,
+    excludeId = null,
+    skipDuplicateCheck = null
+) => {
+    if (!input || input.trim() === '') {
+        return { valid: false, message: 'Code required' }
+    }
+
+    if (!/^[A-Z0-9]{1,20}$/.test(input)) {
+        return {
+            valid: false,
+            message: 'Code can be maximum 20 characters and can contain  ' +
+                        'only numbers and capital letters'
         }
-
-        const nameRegex = /^[A-Za-z'-\s]{1,100}$/
-
-        if (!nameRegex.test(name)) {
-            return {
-                valid: false,
-                message: 'Name can be maximum 100 characters and can contain ' +
-                         'only letters, numbers, spaces, hyphens, ' +
-                         'apostrophes and periods'
-            }
-        }
-
-        return { valid: true, message: '' }
-    },
-
-    validateCode: async (code, excludeId = null) => {
-        if (!code || code.trim() === '') {
-            return { valid: false, message: 'Code required' }
-        }
-
-        const codeRegex = /^[A-Z0-9]{1,20}$/
-
-        if (!codeRegex.test(code)) {
-            return {
-                valid: false,
-                message: 'Code can be maximum 20 characters and can contain  ' +
-                         'only numbers and capital letters'
-            }
-        }
-
-        const duplicateCheck = await checkForDuplicate(
-            { code },
-            getDepartments,
-            Number(excludeId)
+    }
+    
+    if (!skipDuplicateCheck) {
+        const duplicateCheck = await validationHelper.checkForDuplicate(
+            { code: input },
+            validationHelper.getDepartments,
+            excludeId
         )
-
+        
         if (duplicateCheck !== 'pass') {
             return { valid: false, message: 'Code taken' }
         }
+    }
 
-        return { valid: true, message: '' }
-    },    
+    return validationHelper.returnSuccess('Code', input, currentValue)
+}
 
-    validateLocation: location => {
-        const validLocations = new Set(['New York', 'San Francisco', 'London'])
+const validateLocation = (input, currentValue = null) => {
+    const validLocations = new Set(['New York', 'San Francisco', 'London'])
 
-        if (!location || location === 'Select location...') {
-            return { valid: false, message: 'Location required' }
-        }
+    if (!input || input === 'Select location...') {
+        return { valid: false, message: 'Location required' }
+    }
 
-        if (!validLocations.has(location)) {
-            return { valid: false, message: 'Location not currently valid' }
-        }
+    if (!validLocations.has(input)) {
+        return { valid: false, message: 'Location not currently valid' }
+    }
 
-        return { valid: true, message: '' }
-    },
+    return validationHelper.returnSuccess('Location', input, currentValue)
+}
 
-    validateIsActive: isActive => {
-        if (isActive !== 0 && isActive !== 1) {
-            return { valid: false, message: 'isActive must be 0 or 1' }
-        }
+const validateDepartment = async (
+    inputObject,
+    excludeId = null,
+    skipDuplicateCheck = null
+) => {
+    const { name, code, location } = inputObject
+    const validationErrors = []
+    const successfulUpdates = []
+    let currentDetails = null
+    
+    if (excludeId) {
+        excludeId = Number(excludeId)
+        const departments = await validationHelper.getDepartments()
+        currentDetails = departments.find(row => row.id === excludeId)
+    }
+    
+    const nameValid = validateName(name, currentDetails?.name)
 
-        return { valid: true, message: '' }
-    },
+    if (!nameValid.valid) {
+        validationErrors.push(nameValid.message)
+    } else {
+        if (nameValid.message) successfulUpdates.push(nameValid.message) 
+    }
 
-    checkForDepartmentChanges: async (entries, departmentId) => {
-        const changeHappened = await checkForChanges(
-            entries,
-            getDepartments,
-            Number(departmentId)
-        )
+    const codeValid = await validateCode(
+        code,
+        currentDetails?.code,
+        excludeId,
+        skipDuplicateCheck
+    )
 
-        return changeHappened
-    }    
+    if (!codeValid.valid) {
+        validationErrors.push(codeValid.message)
+    } else {
+        if (codeValid.message) successfulUpdates.push(codeValid.message)
+    }
+
+    const locationValid = validateLocation(location, currentDetails?.location)
+
+    if (!locationValid.valid) {
+        validationErrors.push(locationValid.message)
+    } else {
+        if (locationValid.message) successfulUpdates.push(locationValid.message)
+    }
+
+    if (
+        excludeId &&
+        validationErrors.length === 0 &&
+        successfulUpdates.length === 0
+    ) {
+        validationErrors.push('No changes detected')
+    }
+    
+    if (validationErrors.length > 0) {
+        return { valid: false, validationErrors }
+    }
+    
+    return { valid: true }    
 }
 
 export default validateDepartment
