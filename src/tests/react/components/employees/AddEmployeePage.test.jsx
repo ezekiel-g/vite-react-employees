@@ -46,6 +46,8 @@ describe('AddEmployeePage', () => {
     afterEach(() => { vi.clearAllMocks() })
 
     it('submits and shows success message on valid input', async () => {
+        vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+
         fetchFromBackEnd
             .mockResolvedValueOnce({ status: 200, data: departmentData })
             .mockResolvedValueOnce({ status: 201, data: {} })
@@ -95,6 +97,8 @@ describe('AddEmployeePage', () => {
     })
 
     it('shows error message on failed API call', async () => {
+        vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+        
         fetchFromBackEnd
             .mockResolvedValueOnce({ status: 200, data: departmentData })
             .mockResolvedValueOnce({ status: 500, data: null })

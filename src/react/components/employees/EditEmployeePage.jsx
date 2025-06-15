@@ -24,6 +24,7 @@ const EditEmployeePage = () => {
 
     const editEmployee = async event => {
         event.preventDefault()
+        window.scrollTo(0, 0)
         setSuccessMessages([])
         setErrorMessages([])
 
@@ -54,8 +55,6 @@ const EditEmployeePage = () => {
         ) {
             return
         }
-
-        window.scrollTo(0, 0)
 
         const fetchResult = await fetchFromBackEnd(
             `${backEndUrl}/api/v1/employees/${employee.id}`,

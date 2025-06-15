@@ -17,6 +17,7 @@ const EditDepartmentPage = () => {
 
     const editDepartment = async event => {
         event.preventDefault()
+        window.scrollTo(0, 0)
         setSuccessMessages([])
         setErrorMessages([])
 
@@ -31,8 +32,6 @@ const EditDepartmentPage = () => {
         }
 
         if (!window.confirm(`Edit ${department.name}?`)) return
-
-        window.scrollTo(0, 0)
 
         const fetchResult = await fetchFromBackEnd(
             `${backEndUrl}/api/v1/departments/${department.id}`,
