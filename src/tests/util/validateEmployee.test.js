@@ -52,7 +52,7 @@ describe('validateEmployee', () => {
     let inputObject
 
     beforeEach(() => {
-        inputObject = { ...defaultInput }
+        inputObject = Object.assign({}, defaultInput)
         validationHelper.checkForDuplicate.mockResolvedValue('pass')
         validationHelper.returnSuccess.mockReturnValue({ valid: true, message: '' })
         vi.spyOn(validationHelper, 'getDepartments').mockResolvedValue(existingDepartments)
