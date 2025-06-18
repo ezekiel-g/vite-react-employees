@@ -282,11 +282,7 @@ const validateEmployee = async (
             successfulUpdates.push(hireDateValid.message) 
         }
     }
-    console.log('excludeId:', excludeId)
-    console.log('validationErrors:', validationErrors)
-    console.log('successfulUpdates:', successfulUpdates)
-    console.log('hireDate:', hireDate)
-    console.log('currentDetails.hireDate:', currentDetails.hire_date)
+
     if (
         excludeId &&
         validationErrors.length === 0 &&
