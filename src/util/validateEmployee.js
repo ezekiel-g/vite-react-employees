@@ -153,11 +153,11 @@ const validateHireDate = (input, currentValue = null) => {
     if (!input) {
         return { valid: false, message: 'Hire date required' }
     }
-    
+
     if (currentValue && currentValue instanceof Date) {
         currentValue = currentValue.toISOString().split('T')[0]
     }
-    
+   
     return validationHelper.returnSuccess('Hire date', input, currentValue)
 }
 
@@ -170,12 +170,12 @@ const validateEmployee = async (
         firstName,
         lastName,
         title,
+        departmentId,
         email,
         countryCode,
         phoneNumber,
         isActive,
-        departmentId,
-        hireDate
+        hireDate,
     } = inputObject
     const validationErrors = []
     const successfulUpdates = []
@@ -185,6 +185,7 @@ const validateEmployee = async (
         excludeId = Number(excludeId)
         const employees = await validationHelper.getEmployees()
         currentDetails = employees.find(row => row.id === excludeId)
+        currentDetails.hire_date = currentDetails.hire_date.split('T')[0]
     }
     
     const firstNameValid =
@@ -281,7 +282,11 @@ const validateEmployee = async (
             successfulUpdates.push(hireDateValid.message) 
         }
     }
-    
+    console.log('excludeId:', excludeId)
+    console.log('validationErrors:', validationErrors)
+    console.log('successfulUpdates:', successfulUpdates)
+    console.log('hireDate:', hireDate)
+    console.log('currentDetails.hireDate:', currentDetails.hire_date)
     if (
         excludeId &&
         validationErrors.length === 0 &&

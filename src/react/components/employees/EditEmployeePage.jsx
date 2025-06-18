@@ -46,7 +46,7 @@ const EditEmployeePage = () => {
         if (!validationResult.valid) {
             setErrorMessages(validationResult.validationErrors)
             return
-        }        
+        }
 
         if (
             !window.confirm(
