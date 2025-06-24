@@ -49,15 +49,15 @@ const AddEmployeePage = () => {
             'application/json',
             'same-origin',
             {
-                firstName,
-                lastName,
+                first_name: firstName,
+                last_name: lastName,
                 title,
-                departmentId,
+                department_id: departmentId,
                 email,
-                countryCode,
-                phoneNumber,
-                isActive,
-                hireDate
+                country_code: countryCode,
+                phone_number: phoneNumber,
+                is_active: isActive,
+                hire_date: hireDate
             }
         )
 
@@ -75,10 +75,7 @@ const AddEmployeePage = () => {
             return
         }
 
-        setErrorMessages(
-            fetchResult.data?.validationErrors ||
-            ['Error adding employee']
-        )
+        setErrorMessages(fetchResult.data || ['Error adding employee'])
     }
 
     const getDepartments = useCallback(async () => {

@@ -42,17 +42,11 @@ const EditDepartmentPage = () => {
         )
         
         if (fetchResult.status >= 200 && fetchResult.status < 300) {
-            setSuccessMessages(
-                fetchResult.data.successfulUpdates ||
-                ['Department edited successfully']
-            )
+            setSuccessMessages(['Department edited successfully'])
             return
         }
 
-        setErrorMessages(
-            fetchResult.data?.validationErrors ||
-            ['Error editing department']
-        )                
+        setErrorMessages(fetchResult.data || ['Error editing department'])                
     }
 
     const getDepartment = useCallback(async () => {
