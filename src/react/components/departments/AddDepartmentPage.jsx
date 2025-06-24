@@ -42,10 +42,7 @@ const AddDepartmentPage = () => {
             return
         }
 
-        setErrorMessages(
-            fetchResult.data?.validationErrors ||
-            ['Error adding department']
-        )
+        setErrorMessages(fetchResult.data || ['Error adding department'])
     }
 
     const successMessageDisplay = messageHelper.showSuccesses(successMessages)

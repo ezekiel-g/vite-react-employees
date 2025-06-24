@@ -88,7 +88,7 @@ const validateEmail = async (
             message:
             'Email address must contain only letters, numbers, ' +
             'periods, underscores, hyphens, plus signs and percent ' +
-            'signs before the "@", a domain name after the "@", and ' +
+            'signs before the "@", a domain name after the "@" and ' +
             'a valid domain extension (e.g. ".com", ".net", ".org") ' +
             'of at least two letters'
         }
@@ -193,6 +193,10 @@ const validateEmployee = async (
 
     if (!firstNameValid.valid) {
         validationErrors.push(firstNameValid.message)
+    } else {
+        if (firstNameValid.message) {
+            successfulUpdates.push(firstNameValid.message) 
+        }
     }
 
     const lastNameValid = validateLastName(lastName, currentDetails?.last_name)
